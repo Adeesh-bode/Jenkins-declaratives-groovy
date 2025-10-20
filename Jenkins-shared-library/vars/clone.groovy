@@ -1,5 +1,5 @@
 def call(String url , String branch ){
-  echo 'Hello Project'
-  git branch: 'main', url: 'https://github.com/Adeesh-bode/jenkins-cicd-ex-django-notes-app.git'
+  echo 'Hello Project - clone called'
+  git branch: branch, url: branch
   echo 'Clone github Project through git plugin & custom shared library call named clone.groovy'
 }
