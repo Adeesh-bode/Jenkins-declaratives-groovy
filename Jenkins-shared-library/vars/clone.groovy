@@ -4,7 +4,7 @@ def call(String url , String branch ){
         error "Both 'url' and 'branch' parameters must be provided!"
   }
   
-  echo 'Hello Project - clone called'
+  echo "Cloning ${url} on branch ${branch}"
   git branch: branch, url: url
   echo 'Clone github Project through git plugin & custom shared library call named clone.groovy'
   
