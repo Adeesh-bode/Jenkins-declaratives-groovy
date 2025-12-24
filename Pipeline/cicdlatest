@@ -1,0 +1,71 @@
+@Library("Shared-Snippets") _
+pipeline {
+    // agent none  // can choose agents per stage
+    agent any
+
+    stages {
+        stage('example-using-shared-lib'){
+            steps{
+                script{
+                    hello() // name of the shared library file [ hello.groovy]
+                }
+            }
+        }
+        stage('code') {
+            steps {
+                echo 'Hello Project'
+                // git branch: 'main', url: 'https://github.com/Adeesh-bode/jenkins-cicd-ex-django-notes-app.git' // optimized by shared lib
+                script{
+                    clone('https://github.com/Adeesh-bode/jenkins-cicd-ex-django-notes-app.git', 'main')
+                }
+                echo 'Clone github Project through git plugin'
+            }
+        }
+
+        stage('Build') {
+            // can Use Jenkins’ Built-In Docker Plugin (Docker Agent)
+            // agent {
+            //     docker {
+            //         image 'docker:25.0.0'  // Docker CLI image
+            //         args '-v /var/run/docker.sock:/var/run/docker.sock'
+            //     }
+            // }    
+            
+            // OR ELSE MAKESURE DOCKER PREINSTALLED on agent 
+            // ( which most of the case is there as running container from image need docker)
+            
+            steps {
+                echo 'Build docker image'
+                sh 'whoami' // to know current user --debugg
+                sh 'docker build -t adeeshbode/django-app:latest .'
+                echo 'Done docker image'
+            }
+        }
+
+        stage('push-docker-hub') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-username-tokens', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+            echo 'Pushing image to Docker Hub...'
+            sh """
+                echo "$PASS" | docker login -u "$USER" --password-stdin
+                docker push adeeshbode/django-app:latest
+            """
+        }
+    }
+}
+
+
+        stage('deploy') {
+            steps {
+                echo 'Hello deploy'
+                // sh 'docker run -d -p 8000:8000 adeeshbode/django-app:latest'
+                // sh 'docker run -d -p 8000:8000 adeeshbode/django-app:latest python3 manage.py runserver 0.0.0.0:8000'
+                sh 'docker compose up -d --build' // --build to rebuild containers or else already exist error
+                // in the above build stage we build the app and pushed image in the compose file 
+                // along with other db, etc container we have our app container which is build from image adeeshbode/django-app:latest 
+                // from above build & push stages
+                sh 'docker ps'
+            }
+        }
+    }
+}
